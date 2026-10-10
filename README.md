@@ -8,21 +8,22 @@ Two hands-on Conditional Access exercises in my home lab tenant. The first requi
 
 ## Contents
 
-* Overview
-* Starting Point
-* Part 1: IP-Based Policy (Require MFA outside Home Lab)
-* Part 2: Location-Based Policy (Block access outside the Philippines)
-* What I've Learned
-* Troubleshooting
-* Next Steps
-* Skills Demonstrated
+- [Overview](#overview)
+- [Starting Point](#starting-point)
+- [Part 1: IP-Based Policy (Require MFA outside Home Lab)](#part-1-ip-based-policy-require-mfa-outside-home-lab)
+- [Part 2: Location-Based Policy (Block access outside the Philippines)](#part-2-location-based-policy-block-access-outside-the-philippines)
+- [Comparing the Two Policies](#comparing-the-two-policies)
+- [What I've Learned](#what-ive-learned)
+- [Troubleshooting](#troubleshooting)
+- [Next Steps](#next-steps)
+- [Skills Demonstrated](#skills-demonstrated)
 
 ---
 
 ## Overview
 
-| Category | Details |
-| :--- | :--- |
+| | |
+|---|---|
 | **Goal** | Control where users can sign in from, using Conditional Access |
 | **Platform** | Microsoft Entra ID, Conditional Access |
 | **Tenant** | evilcorpLAB (lab tenant) |
@@ -31,130 +32,215 @@ Two hands-on Conditional Access exercises in my home lab tenant. The first requi
 | **Test users** | Carmina Galvelo (IT), jaydee mamba |
 | **Testing tools** | What If tool, Sign-in logs, report-only results, Proton VPN, InPrivate browser sessions |
 
----
-
 ## Starting Point
 
-Before building anything, I reviewed what the tenant already enforced. Security defaults cannot be enabled here, because the tenant already contains custom user-created policies.
+Before building anything, I reviewed what the tenant already enforced. Security defaults cannot be enabled here, because the tenant already uses Conditional Access policies. Four **Microsoft-managed policies** were already On:
 
-![Overview Screenshot](image_139ed8.png)
+- Block legacy authentication
+- Multifactor authentication for Azure Management
+- Multifactor authentication for admins
+- Multifactor authentication for all users
+
+That meant "require MFA for everyone" and "block legacy auth" were already covered, so I built policies that add something new: control by network and by country.
 
 ---
 
 ## Part 1: IP-Based Policy (Require MFA outside Home Lab)
 
-### Step 1: Configuring Named Locations (IP Ranges)
+**Idea:** include every network, then **exclude** my trusted home IP. MFA is required everywhere except at home. This is the classic "trusted network" pattern.
 
-We set up a trusted IP range representing the homelab network in the Entra admin center.
+### Step 1: Create a trusted named location
 
-![Conditional Access IP Base](conditional%20access%20ip%20base_2.jpg)
+![Named location with the trusted home IP](conditional_access_ip_base.jpg)
 
-### Step 2: Refining IP Range Properties
+![Second capture of the same named location panel](conditional_access_ip_base_2.jpg)
 
-Reviewing and saving the IPv4/IPv6 range configuration and marking it as a trusted location (`Homelab - lab -globe`).
+1. Go to **Conditional Access > Named locations > IP ranges location**.
+2. Name it `Homelab - lab -globe`.
+3. Tick **Mark as trusted location**.
+4. Add my home public IP as a range. A single address is written as a `/32` range, and the panel shows **1 IP range found**.
 
-![Conditional Access IP Base 2](conditional%20access%20ip%20base%202_2.jpg)
+The Named locations list now holds three entries:
 
-### Step 3: Creating the Conditional Access Policy
+- **All Compliant Network locations** (Network Access type, not trusted, not used)
+- **conditional access country based** (Countries (IP), used by my location block policy in Part 2)
+- **Homelab - lab -globe** (IP ranges, **Trusted: Yes**)
 
-Creating a new policy named **"Require MFA outside Home Lab"** to target cloud resources and assign conditions based on network locations.
+### Step 2: Create the policy
 
-![Policy for IP Base Access](policyforipBase%20access.jpg)
+![Creating the Require MFA outside Home Lab policy](policy_for_ipBase_access.jpg)
 
-### Step 4: Configuring Exclusions for Trusted Locations
+1. Go to **Conditional Access > Policies > New policy** and name it `Require MFA outside Home Lab`.
+2. **Users:** specific users included and specific users excluded.
+3. **Target resources:** All resources (formerly "All cloud apps").
+4. **Network:** Any network or location (the exclusion comes next).
+5. Entra shows a **"Don't lock yourself out!"** warning, because the policy covers the admin portals when targeting all resources. I kept my emergency exclusion in mind and tested in report-only first.
 
-Configuring the policy settings to exclude the trusted `Homelab - lab - globe` location so that users inside the home network bypass external MFA triggers.
+### Step 3: Exclude the trusted location and set report-only
 
-![Settings for IP Blocking](settingsforip%20blocking.jpg)
+![Policy settings with the trusted location excluded](settings_for_ip_blocking.jpg)
 
-### Step 5: Testing with Report-Only Mode
+1. Open **Network** (or **Conditions > Locations**) and set **Configure: Yes**.
+2. **Include:** Any network or location.
+3. **Exclude:** Selected networks and locations, then pick `Homelab - lab -globe`. The policy now reads **"Any network or location and 1 excluded"**.
+4. **Grant:** Require multifactor authentication.
+5. **Enable policy:** **Report-only**, so I can see what it would do before enforcing it.
+6. Click **Save**.
 
-Verifying that the IP-based policy works as expected by checking the **Report-only** tab in sign-in activity details.
+### Step 4: Sign in from the home network
 
-![Confirming IP Policy under Report Only Tab](confirming%20ip%20policy%20is%20working%20under%20report%20only%20tab_2.jpg)
+![Sign-in event from the trusted IP](ip_is_within_home_range_successed_signin.jpg)
 
-### Step 6: Successful Sign-in within Home Network
+The new **Sign-in events** view shows jaydee mamba signing in to **One Outlook Web** (resource: Office 365 Exchange Online) from the trusted home IP. The **Conditional Access** column reads **Success**, and the location resolves to a Philippine town. The sign-in IP matches the trusted named location, so the policy has no reason to act on it.
 
-Reviewing sign-in events to confirm successful authentication when the user's IP address falls within the trusted home range.
+### Step 5: Confirm access from home
 
-![IP is within home range successful signin](ipiswithinhome%20rangesuccessed%20signin.jpg)
+![Mailbox open from the home network](confirmation_she_can_signout_within_home_network_no_mfa_required.jpg)
 
-### Step 7: Confirmation of Access
+Signing in to Outlook on the web as jaydee mamba from the home network opened the mailbox, with the welcome email from the onboarding project in the inbox. No extra MFA challenge appeared during this test.
 
-Confirming that the user can successfully sign out and access their mailbox within the home network without unnecessary blocks.
+### Step 6: Verify in the Report-only tab
 
-![Confirmation she can sign out within home network](confirmation%20she%20can%20signout%20within%20home%20network%20no%20mfa%20required_2.jpg)
+![Report-only tab on the sign-in](confirming_ip_policy_is_working_under_report_only_tab.jpg)
+
+Opening the sign-in's **Activity Details > Report only** tab shows how each report-only policy would have behaved:
+
+- **Require MFA outside Home Lab** (grant control: MFA): **Report-only: Not applied**. That's the expected result, because the sign-in came from the excluded trusted IP.
+- **Compliant Device for Global Admins** (grant control: Require compliant device): **Report-only: Not applied**, because this user isn't a Global Administrator.
+
+**Result:** the policy leaves the trusted network alone. The next step would be to sign in from a different IP, confirm the tab shows MFA as required, and then switch the policy to **On**.
 
 ---
 
 ## Part 2: Location-Based Policy (Block access outside the Philippines)
 
-### Step 1: Reviewing Active Location Policies
+**Idea:** a country-based named location plus a **Block access** grant. Anyone in scope who signs in from outside the Philippines is stopped.
 
-Reviewing active user-created policies in Microsoft Entra ID, specifically the **"Blocked access outside philippines_ITGroup"** policy.
+### Step 1: The policy in the policy list
 
-![Showing Policy Location Base Blocking](showingpolicy%20locationbase%20blocking.jpg)
+![Policy list with the location block highlighted](showing_policy_location_base_blocking.jpg)
 
-### Step 2: Active Policy Overview
+The **Policies** page lists 7 policies:
 
-Confirming the enabled location-based policy configured to block traffic outside the allowed region.
+- **4 Microsoft-managed policies**, all On: Block legacy authentication, MFA for Azure Management, MFA for admins, MFA for all users.
+- **3 policies I created:** `Blocked access outside philippines_ITGroup` (On), `Compliant Device for Global Admins` (Report-only), and `Enforce MFA for IT group` (On).
 
-![Testing Conditional Policies Blocking Access Outside Philippines](testing%20%20Conditional%20policies%20Blocking%20access%20outside%20Philippines_2.jpg)
+The block policy is highlighted. It targets All resources, uses the country-based named location, and its grant control is **Block access**.
 
-### Step 3: Policy Evaluation Results
+### Step 2: Simulate first, with the What If tool (user and app)
 
-Checking policy evaluation results to verify which controls apply to targeted user accounts.
+![What If tool with user and cloud app selected](testing_exchange_online_if_user_can_signin.jpg)
 
-![Result](result_2.jpg)
+I used **What If** before any real sign-in, because a simulation can't lock anyone out:
 
-### Step 4: What-If Simulation for Specific Countries
+- **User:** Carmina Galvelo
+- **Target resource:** Cloud apps, then **Office 365 Exchange Online** (the app the user signs in to for Outlook)
 
-Using the **What If** tool to simulate a sign-in attempt originating from China using a test IP address (`114.114.114.114`).
+### Step 3: What If sign-in conditions
 
-![Testing China Location](testingchina%20location.jpg)
+![What If conditions set to China](testing_china_location.jpg)
 
-### Step 5: What-If Simulation for Target Cloud Apps
+- **Device platform:** Windows
+- **Client app:** Browser
+- **IP address:** a public IP that belongs to China
+- **Country:** China
 
-Selecting specific applications such as **Office 365 Exchange Online** in the What If simulation tool to check policy enforcement.
+What If requires the **IP address and country to match each other**. A home IP paired with "China" would be a mismatch and an unreliable result.
 
-![Testing Exchange Online if user can sign in](testingexchange%20onlineifusercan%20signin.jpg)
+### Step 4: What If result
 
-### Step 6: Simulating External Access with VPN
+![What If result showing two policies applying](result.jpg)
 
-Using Proton VPN connected to a server in Japan (`159.26.119.227`) to perform a real-world test of the geo-blocking rule.
+Two policies apply to this simulated sign-in:
 
-![Testing Using VPN](testingusing%20vpn.jpg)
+- **Require multifactor authentication for all users** (Microsoft-managed): Require MFA, On.
+- **Blocked access outside philippines_ITGroup:** **Block access**, On.
 
-### Step 7: Real User Access Blocked by Entra ID
+When a Block policy and an MFA policy both apply, the block wins, so the user would never reach an MFA prompt.
 
-Confirming that Microsoft Entra ID intercepts the user sign-in from Japan and displays the **"You cannot access this right now"** block screen.
+### Step 5: The policy is On before the live test
 
-![User Blocked Entra Detected Japan IP Here](userblockedentra%20detectedjapanIP%20here.jpg)
+![Policy list confirming the block policy is On](testing__Conditional_policies_Blocking_access_outside_Philippines.jpg)
 
-### Step 8: Investigating Sign-in Logs
+Before testing for real, I checked the policy list again to confirm `Blocked access outside philippines_ITGroup` was **On**.
 
-Reviewing the user sign-in logs to verify failed login attempts originating from Minato-Ku, Tokyo, matching the blocked policy trigger.
+### Step 6: Live test through a VPN
 
-![Sign-in Logs shows user try to log in Tokyo](signinLogsshows%20usertrytologin%20tokyo.jpg)
+![Proton VPN connected to Japan](testing_using_vpn.jpg)
+
+For the real test, I connected **Proton VPN** to a **Japan** server. The VPN assigns a Japanese IP address, so Microsoft treats every sign-in as coming from outside the Philippines. The policy's **Enable policy: On**, **Grant: Block access**, and **Network: 1 included** settings are visible behind the VPN window.
+
+### Step 7: The block screen
+
+![Access blocked by Conditional Access](user_blocked_entra_detected_japan_IP_here.jpg)
+
+Signing in as `cgalvelo` in an InPrivate window shows **"You cannot access this right now."** The message explains that the sign-in was successful but doesn't meet the criteria to access the resource, for example because of a restricted browser, app, or location. This is the user-facing result of a Conditional Access block.
+
+### Step 8: Sign-in logs show the Tokyo origin
+
+![Sign-in logs for Carmina Galvelo showing Tokyo](signin_Logs_shows_user_try_to_log_in_tokyo.jpg)
+
+Carmina Galvelo's **Sign-in logs** list the attempts from the VPN's IP, geolocated to **Minato-Ku (Tokyo)**. These three rows show **error code 50126** with **Conditional Access: Not Applied**. Error 50126 means the credentials were rejected during password validation, so those attempts stopped before Conditional Access was evaluated. A sign-in that is blocked by a Conditional Access policy is logged with a different error code, **53003**. This is a good reminder to read the error code and not just the Failure status.
+
+**Result:** the location policy blocks the user outside the Philippines, as shown by the simulation and the real VPN test.
+
+---
+
+## Comparing the Two Policies
+
+| | Part 1: IP-based | Part 2: Location-based |
+|---|---|---|
+| **Policy name** | Require MFA outside Home Lab | Blocked access outside philippines_ITGroup |
+| **Named location** | Trusted IP range (`/32`) | Countries (IP) |
+| **Logic** | Include all networks, exclude the trusted IP | Block anything outside the Philippines |
+| **Grant control** | Require multifactor authentication | Block access |
+| **State when tested** | Report-only | On |
+| **Test methods** | Home sign-in, Report-only tab | What If simulation, VPN sign-in, Sign-in logs |
+| **Risk if misconfigured** | Low (adds MFA prompts) | High (can lock users out) |
 
 ---
 
 ## What I've Learned
 
-Through these labs, I gained hands-on experience in securing organizational resources using Microsoft Entra ID Conditional Access policies. Key takeaways include:
-* **Named Locations:** How to define specific IP ranges (trusted homelabs) and geographic regions (countries) to manage network-based access rules.
-* **Policy Enforcement & Report-Only Mode:** Testing policies safely using Report-Only mode to verify their impact before enforcing them on users.
-* **Sign-in Logs & Troubleshooting:** Analyzing real-time user sign-in events to confirm whether access was granted, interrupted, or successfully blocked based on location and IP criteria.
+**Concepts**
+- A Conditional Access policy is an if-then rule: **assignments** (users, apps, conditions) decide when it applies, and **access controls** (grant or session) decide what happens.
+- **Named locations** come in two types: IP ranges (a single address is a `/32`) and countries. Marking an IP range as **trusted** lets policies refer to it.
+- The **include everything, exclude the trusted location** pattern is how "MFA outside the office" policies work.
+- When several policies apply to a sign-in, they stack. **Block always beats a grant control.**
+- Microsoft creates **managed policies** automatically, and security defaults cannot be enabled once a tenant uses Conditional Access.
+
+**Practical habits**
+- **Start in report-only**, then check the sign-in's **Report-only** tab before enforcing anything.
+- **Simulate with What If** before real tests. The IP address and country must match each other.
+- **Test real sign-ins in an InPrivate window** so cached sessions don't hide the result.
+- **Read the error code in the Sign-in logs.** 50126 means bad credentials, and 53003 means a policy blocked the sign-in.
+- **Protect against lockout:** keep emergency access accounts excluded from block policies, and pilot on a small group first.
+- A **home IP can change**. A trusted-IP policy depends on that address staying the same, so it needs rechecking if the ISP changes it.
 
 ---
 
 ## Troubleshooting
 
-* **Report-Only Insights:** Utilizing the Report-Only feature ensures rules can be evaluated safely against live traffic before switching them to "On".
-* **VPN Verification:** When testing geo-blocking, make sure your VPN client is active and verify the assigned public IP address matches your testing region.
+| Issue | Cause | Fix |
+|---|---|---|
+| What If showed the location block as **not applying** to a user it should have blocked | The policy's included group had been deleted when I rebuilt my groups, so the policy applied to nobody | Reselect the group under **Users > Include** |
+| What If result looked unreliable | IP address and country didn't match | Use an IP that belongs to the selected country |
+| Failed sign-ins in the logs showed **Conditional Access: Not Applied** | The sign-in failed at credential validation (error 50126) before policies were evaluated | Read the error code, and look for 53003 for policy blocks |
+| A test sign-in seemed to ignore the policy | An existing session or earlier MFA satisfied the request | Retest in a fresh InPrivate window |
+| Security defaults could not be turned on | The tenant already uses Conditional Access | Use Conditional Access policies instead |
 
 ---
 
 ## Next Steps
 
-* Expand Conditional Access coverage to mobile device management (Intune
+- [ ] Add a policy that **blocks unknown IPs** for a pilot group, using the trusted named location
+- [ ] Create an **emergency access account** and an exclusion group, and exclude it from every block policy
+- [ ] Add **risk-based policies**: sign-in risk requires MFA, user risk requires a password change (as two separate policies)
+- [ ] Add **Terms of use** acceptance for new hires, to extend the onboarding project
+- [ ] Block unsupported **device platforms** and add a **sign-in frequency** session control
+- [ ] Use **authentication strengths** to require phishing-resistant MFA for admins
+- [ ] Switch the IP-based policy from report-only to On after testing from an outside IP
+
+## Skills Demonstrated
+
+Microsoft Entra ID, Conditional Access, named locations, MFA policy design, location and IP-based access control, report-only testing, What If analysis, sign-in log analysis, VPN-based testing, troubleshooting.
