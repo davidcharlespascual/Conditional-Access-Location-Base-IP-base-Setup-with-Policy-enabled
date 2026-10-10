@@ -38,7 +38,7 @@ Two hands-on Conditional Access exercises in my home lab tenant. The first requi
 
 Before building anything, I reviewed what the tenant already enforced. Security defaults cannot be enabled here, because the tenant already contains custom user-created policies.
 
-![Overview Screenshot](image_139ed8.png)
+<img src="image_139ed8.png" alt="Overview Screenshot" width="800">
 
 ---
 
@@ -46,31 +46,31 @@ Before building anything, I reviewed what the tenant already enforced. Security 
 
 ### Step 1: Configuring Named Locations (IP Ranges)
 We set up a trusted IP range representing the homelab network in the Entra admin center.
-![Conditional Access IP Base](conditional%20access%20ip%20base.jpg)
+<img src="conditional access ip base.jpg" alt="Conditional Access IP Base" width="800">
 
 ### Step 2: Refining IP Range Properties
 Reviewing and saving the IPv4/IPv6 range configuration and marking it as a trusted location (`Homelab - lab -globe`).
-![Conditional Access IP Base 2](conditional%20access%20ip%20base%202.jpg)
+<img src="conditional access ip base 2.jpg" alt="Conditional Access IP Base 2" width="800">
 
 ### Step 3: Creating the Conditional Access Policy
 Creating a new policy named **"Require MFA outside Home Lab"** to target cloud resources and assign conditions based on network locations.
-![Policy for IP Base Access](policy%20for%20ipBase%20access.jpg)
+<img src="policy for ipBase access.jpg" alt="Policy for IP Base Access" width="800">
 
 ### Step 4: Configuring Exclusions for Trusted Locations
 Configuring the policy settings to exclude the trusted `Homelab - lab - globe` location so that users inside the home network bypass external MFA triggers.
-![Settings for IP Blocking](settings%20for%20ipBlocking.jpg)
+<img src="settings for ipBlocking.jpg" alt="Settings for IP Blocking" width="800">
 
 ### Step 5: Testing with Report-Only Mode
 Verifying that the IP-based policy works as expected by checking the **Report-only** tab in sign-in activity details.
-![Confirming IP Policy under Report Only Tab](confirming%20ip%20policy%20is%20working%20under%20report%20only%20tab.jpg)
+<img src="confirming ip policy is working under report only tab.jpg" alt="Confirming IP Policy under Report Only Tab" width="800">
 
 ### Step 6: Successful Sign-in within Home Network
 Reviewing sign-in events to confirm successful authentication when the user's IP address falls within the trusted home range.
-![IP is within home range successful signin](ip%20is%20within%20home%20range%20successed%20signin.jpg)
+<img src="ip is within home range successed signin.jpg" alt="IP is within home range successful signin" width="800">
 
 ### Step 7: Confirmation of Access
 Confirming that the user can successfully sign out and access their mailbox within the home network without unnecessary blocks.
-![Confirmation she can sign out within home network](confirmation%20she%20can%20signout%20within%20home%20network%20no%20mfa%20required.jpg)
+<img src="confirmation she can signout within home network no mfa required.jpg" alt="Confirmation she can sign out within home network" width="800">
 
 ---
 
@@ -78,27 +78,27 @@ Confirming that the user can successfully sign out and access their mailbox with
 
 ### Step 1: Reviewing Active Location Policies
 Reviewing active user-created policies in Microsoft Entra ID, specifically the **"Blocked access outside philippines_ITGroup"** policy.
-![Testing Conditional Policies Blocking Access Outside Philippines](testing%20%20Conditional%20policies%20Blocking%20access%20outside%20Philippines.jpg)
+<img src="testing  Conditional policies Blocking access outside Philippines.jpg" alt="Testing Conditional Policies Blocking Access Outside Philippines" width="800">
 
 ### Step 2: Policy Evaluation Results & What-If Testing
 Checking policy evaluation results and using the **What If** tool to test conditions (such as device platform, browser, simulated IP address, and country).
-![Testing China Location](testing%20china%20location.jpg)
+<img src="testing china location.jpg" alt="Testing China Location" width="800">
 
 ### Step 3: Testing Specific Cloud Apps
 Targeting specific cloud applications like **Office 365 Exchange Online** in the What If simulation tool to see policy impact.
-![Testing Exchange Online if user can sign in](testing%20exchange%20online%20if%20user%20cansignin.jpg)
+<img src="testing exchange online if user cansignin.jpg" alt="Testing Exchange Online if user can sign in" width="800">
 
 ### Step 4: Simulating External Access with VPN
 Using Proton VPN to connect to an external server (such as Japan) to test real-world geo-blocking behavior.
-![Testing Using VPN](testing%20using%20vpn.jpg)
+<img src="testing using vpn.jpg" alt="Testing Using VPN" width="800">
 
 ### Step 5: User Access Blocked by Entra ID
 Verifying that Entra ID successfully detects the foreign VPN IP address (Japan) and blocks user access as mandated by the policy.
-![User Blocked Entra Detected Japan IP Here](user%20blocked%20entra%20detected%20japan%20IP%20here.jpg)
+<img src="user blocked entra detected japan IP here.jpg" alt="User Blocked Entra Detected Japan IP Here" width="800">
 
 ### Step 6: Investigating Sign-in Logs
 Investigating sign-in logs when a user attempts to log in from Minato-Ku, Tokyo, resulting in failure entries.
-![Sign-in Logs shows user try to log in Tokyo](signin%20Logs%20shows%20user%20try%20to%20log%20in%20tokyo.jpg)
+<img src="signin Logs shows user try to log in tokyo.jpg" alt="Sign-in Logs shows user try to log in Tokyo" width="800">
 
 ---
 
