@@ -62,7 +62,7 @@ Configuring the policy settings to exclude the trusted `Homelab - lab - globe` l
 
 ### Step 5: Testing with Report-Only Mode
 Verifying that the IP-based policy works as expected by checking the **Report-only** tab in sign-in activity details.
-![Confirming IP Policy under Report Only Tab](confirming%20ip%20policy%20is%20working%20under%20report%20only%2520tab.jpg)
+![Confirming IP Policy under Report Only Tab](confirming%20ip%20policy%20is%20working%20under%20report%20only%20tab.jpg)
 
 ### Step 6: Successful Sign-in within Home Network
 Reviewing sign-in events to confirm successful authentication when the user's IP address falls within the trusted home range.
