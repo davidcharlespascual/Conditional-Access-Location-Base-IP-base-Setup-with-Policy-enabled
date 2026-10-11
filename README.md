@@ -58,7 +58,7 @@ That meant "require MFA for everyone" and "block legacy auth" were already cover
 1. Go to **Conditional Access > Named locations > IP ranges location**.
 2. Name it `Homelab - lab -globe`.
 3. Tick **Mark as trusted location**.
-4. Add my home public IP as a range. A single address is written as a `/32` range, and the panel shows **1 IP range found**.
+4. Add my home public IP as a range. A single address is written as a `/32` range, and the panel shows **1 IP range found**. The address is blurred in the screenshots.
 
 The Named locations list now holds three entries:
 
@@ -68,17 +68,17 @@ The Named locations list now holds three entries:
 
 ### Step 2: Create the policy
 
-![Creating the Require MFA outside Home Lab policy](policy_for_ipBase_access.jpg)
+![Creating the Require MFA outside Home Lab policy](policyforipBase_access.jpg)
 
 1. Go to **Conditional Access > Policies > New policy** and name it `Require MFA outside Home Lab`.
 2. **Users:** specific users included and specific users excluded.
 3. **Target resources:** All resources (formerly "All cloud apps").
 4. **Network:** Any network or location (the exclusion comes next).
-5. Entra shows a **"Don't lock yourself out!"** warning, because the policy covers the admin portals when targeting all resources. I kept my emergency exclusion in mind and tested in report-only first.
+5. Entra shows a **"Don't lock yourself out!"** warning, because targeting all resources affects the admin portals. I kept my emergency exclusion in mind and tested in report-only first.
 
 ### Step 3: Exclude the trusted location and set report-only
 
-![Policy settings with the trusted location excluded](settings_for_ip_blocking.jpg)
+![Policy settings with the trusted location excluded](settingsforip_blocking.jpg)
 
 1. Open **Network** (or **Conditions > Locations**) and set **Configure: Yes**.
 2. **Include:** Any network or location.
@@ -89,21 +89,21 @@ The Named locations list now holds three entries:
 
 ### Step 4: Sign in from the home network
 
-![Sign-in event from the trusted IP](ip_is_within_home_range_successed_signin.jpg)
+![Sign-in event from the trusted IP](ipiswithinhome_rangesuccessed_signin.jpg)
 
-The new **Sign-in events** view shows jaydee mamba signing in to **One Outlook Web** (resource: Office 365 Exchange Online) from the trusted home IP. The **Conditional Access** column reads **Success**, and the location resolves to a Philippine town. The sign-in IP matches the trusted named location, so the policy has no reason to act on it.
+The **Sign-in events** view shows jaydee mamba signing in to **One Outlook Web** (resource: Office 365 Exchange Online) from the trusted home IP, which is blurred here. The **Conditional Access** column reads **Success**, and the location resolves to a Philippine town. The sign-in IP matches the trusted named location, so the policy has no reason to act on it.
 
 ### Step 5: Confirm access from home
 
 ![Mailbox open from the home network](confirmation_she_can_signout_within_home_network_no_mfa_required.jpg)
 
-Signing in to Outlook on the web as jaydee mamba from the home network opened the mailbox, with the welcome email from the onboarding project in the inbox. No extra MFA challenge appeared during this test.
+Signing in to Outlook on the web as jaydee mamba from the home network opened the mailbox, with the welcome email from my onboarding project in the inbox. No extra MFA challenge appeared during this test.
 
 ### Step 6: Verify in the Report-only tab
 
 ![Report-only tab on the sign-in](confirming_ip_policy_is_working_under_report_only_tab.jpg)
 
-Opening the sign-in's **Activity Details > Report only** tab shows how each report-only policy would have behaved:
+Opening the sign-in's **Activity Details > Report only** tab shows how each report-only policy would have behaved. The highlighted row is the policy under test:
 
 - **Require MFA outside Home Lab** (grant control: MFA): **Report-only: Not applied**. That's the expected result, because the sign-in came from the excluded trusted IP.
 - **Compliant Device for Global Admins** (grant control: Require compliant device): **Report-only: Not applied**, because this user isn't a Global Administrator.
@@ -118,7 +118,7 @@ Opening the sign-in's **Activity Details > Report only** tab shows how each repo
 
 ### Step 1: The policy in the policy list
 
-![Policy list with the location block highlighted](showing_policy_location_base_blocking.jpg)
+![Policy list with the location block highlighted](showingpolicy_locationbase_blocking.jpg)
 
 The **Policies** page lists 7 policies:
 
@@ -129,7 +129,7 @@ The block policy is highlighted. It targets All resources, uses the country-base
 
 ### Step 2: Simulate first, with the What If tool (user and app)
 
-![What If tool with user and cloud app selected](testing_exchange_online_if_user_can_signin.jpg)
+![What If tool with user and cloud app selected](testingexchange_onlineifusercan_signin.jpg)
 
 I used **What If** before any real sign-in, because a simulation can't lock anyone out:
 
@@ -138,7 +138,9 @@ I used **What If** before any real sign-in, because a simulation can't lock anyo
 
 ### Step 3: What If sign-in conditions
 
-![What If conditions set to China](testing_china_location.jpg)
+![What If conditions set to China](testingchina_location.jpg)
+
+The highlighted fields are the sign-in conditions:
 
 - **Device platform:** Windows
 - **Client app:** Browser
@@ -166,21 +168,21 @@ Before testing for real, I checked the policy list again to confirm `Blocked acc
 
 ### Step 6: Live test through a VPN
 
-![Proton VPN connected to Japan](testing_using_vpn.jpg)
+![Proton VPN connected to Japan](testingusing_vpn.jpg)
 
-For the real test, I connected **Proton VPN** to a **Japan** server. The VPN assigns a Japanese IP address, so Microsoft treats every sign-in as coming from outside the Philippines. The policy's **Enable policy: On**, **Grant: Block access**, and **Network: 1 included** settings are visible behind the VPN window.
+For the real test, I connected **Proton VPN** to a **Japan** server. The VPN assigns a Japanese IP address, so Microsoft treats every sign-in as coming from outside the Philippines. The policy's **Enable policy: On**, **Grant: Block access**, and **Network: 1 included** settings are visible behind the VPN window, and the Policy ID is blurred.
 
 ### Step 7: The block screen
 
-![Access blocked by Conditional Access](user_blocked_entra_detected_japan_IP_here.jpg)
+![Access blocked by Conditional Access](userblockedentra_detectedjapanIP_here.jpg)
 
 Signing in as `cgalvelo` in an InPrivate window shows **"You cannot access this right now."** The message explains that the sign-in was successful but doesn't meet the criteria to access the resource, for example because of a restricted browser, app, or location. This is the user-facing result of a Conditional Access block.
 
 ### Step 8: Sign-in logs show the Tokyo origin
 
-![Sign-in logs for Carmina Galvelo showing Tokyo](signin_Logs_shows_user_try_to_log_in_tokyo.jpg)
+![Sign-in logs for Carmina Galvelo showing Tokyo](signinLogsshows_usertrytologin_tokyo.jpg)
 
-Carmina Galvelo's **Sign-in logs** list the attempts from the VPN's IP, geolocated to **Minato-Ku (Tokyo)**. These three rows show **error code 50126** with **Conditional Access: Not Applied**. Error 50126 means the credentials were rejected during password validation, so those attempts stopped before Conditional Access was evaluated. A sign-in that is blocked by a Conditional Access policy is logged with a different error code, **53003**. This is a good reminder to read the error code and not just the Failure status.
+Carmina Galvelo's **Sign-in logs** list the attempts from the VPN's IP. The red boxes mark the **Status** (Failure), the **IP address**, and the **Location**, which is geolocated to **Minato-Ku (Tokyo)**. These three rows show **error code 50126** with **Conditional Access: Not Applied**. Error 50126 means the credentials were rejected during password validation, so those attempts stopped before Conditional Access was evaluated. A sign-in that is blocked by a Conditional Access policy is logged with a different error code, **53003**. This is a good reminder to read the error code and not just the Failure status.
 
 **Result:** the location policy blocks the user outside the Philippines, as shown by the simulation and the real VPN test.
 
